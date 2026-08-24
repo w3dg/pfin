@@ -1,0 +1,9 @@
+# Where data files live
+data_dir = "./testdata/"
+
+# Display
+currency = "INR"
+date_format = "2006-01-02"   # Go's reference layout
+
+# Default entry type when none is specified via --type
+default_entry_type = "expense"
