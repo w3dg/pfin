@@ -93,10 +93,10 @@ func runAdd(t *tracker.Tracker, args []string) {
 		if err := t.AddExpense(*amount, *date, *category, *note); err != nil {
 			log.Fatal("Error adding expense: ", err)
 		}
-
 	} else {
-		// t.AddPositivePayment(*etype, *amount, *category, *note) — wire up once tracker supports it
-		fmt.Printf("would add positive pay: etype=%s amount=%s category=%s note=%s\n", *etype, *amount, *category, *note)
+		if err := t.AddPositivePayment(*amount, *date, *category, *note); err != nil {
+			log.Fatal("Error adding positive payment ", err)
+		}
 	}
 }
 

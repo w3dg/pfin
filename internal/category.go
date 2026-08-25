@@ -58,6 +58,12 @@ func buildReverseCategoryMap() map[string]CategoryType {
 	return m
 }
 
+var IncomeCategoryToEnum = map[CategoryType]EntryType{
+	INCOME_CATEGORY:    INCOME,
+	SET_ASIDE_CATEGORY: SET_ASIDE,
+	TOP_UP_CATEGORY:    TOP_UP,
+}
+
 func (c CategoryType) String() string {
 	name := CategoryName[c]
 	if name == "" {

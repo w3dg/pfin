@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/w3dg/pfin/config"
@@ -65,7 +66,6 @@ func (t *Tracker) init() {
 	t.Entries = entries
 }
 
-// t.AddExpense(*amount, *category, *note) — wire up once tracker supports it
 func (t *Tracker) AddExpense(amount, date, category, note string) error {
 	a := internal.Amount{}
 
@@ -101,6 +101,61 @@ func (t *Tracker) AddExpense(amount, date, category, note string) error {
 	fmt.Printf("Added expense: %v\n", e)
 
 	return nil
+}
+
+func (t *Tracker) AddPositivePayment(amount, date, category, note string) error {
+	a := internal.Amount{}
+
+	// force double quotes around the amount
+	if err := a.UnmarshalJSON([]byte(fmt.Sprintf("\"%v\"", amount))); err != nil {
+		log.Fatal("Could not parse amount")
+	}
+
+	categoryEnum, ok := internal.NameToCategory[category]
+	if !ok {
+		return ErrUnknownPositivePayCategory
+	}
+
+	allowedCategoriesForPositivePayment := []internal.CategoryType{internal.INCOME_CATEGORY, internal.SET_ASIDE_CATEGORY, internal.TOP_UP_CATEGORY}
+	if !slices.Contains(allowedCategoriesForPositivePayment, categoryEnum) {
+		return ErrUnknownPositivePayCategory
+	}
+
+	et, err := GetIncomeEntryTypeFromCategory(categoryEnum)
+	if err != nil {
+		return err
+	}
+
+	e := internal.Entry{
+		EntryType: et,
+		Date:      date,
+		Amount:    a,
+		Category:  categoryEnum,
+		Notes:     note,
+	}
+
+	dbw, err := db.NewWriter(t.Cfg.GetDataFilePath())
+	if err != nil {
+		log.Fatal("Error initializing new db writer", err)
+	}
+
+	defer dbw.Close()
+
+	if err := dbw.Write(e); err != nil {
+		log.Fatalf("Error writing positive payment to db: %v, %v", t.Cfg.GetDataFilePath(), err)
+	}
+
+	fmt.Printf("Added positive payment: %v\n", e)
+
+	return nil
+}
+
+func GetIncomeEntryTypeFromCategory(c internal.CategoryType) (internal.EntryType, error) {
+	v, ok := internal.IncomeCategoryToEnum[c]
+	if !ok {
+		return -1, ErrUnknownPositivePayCategory
+	}
+	return v, nil
 }
 
 func (t *Tracker) String() string {
